@@ -2,24 +2,100 @@
 
 ## 개요
 
-블로그 글 작성 및 수정 폼 구현
+블로그 글 작성 및 수정 폼 구현 (Mock Data 기반)
 - 통합 폼 컴포넌트 (작성/수정 모두 사용)
 - 제목 및 내용 입력 필드
 - 유효성 검증 (Zod)
-- Server Actions로 데이터 저장
+- Mock Data 조작으로 데이터 저장 (로컬 상태 관리)
 - 권한 확인 (수정 시)
+
+**참고**: 백엔드 연동(Supabase, Server Actions)은 추후 구현 예정. 현재는 프론트엔드 UI와 로컬 상태 관리만 구현합니다.
 
 ---
 
 ## Task List
 
 ### 0. 사전 준비
-- [ ] shadcn/ui 컴포넌트 설치: `npx shadcn@latest add form textarea label`
+- [ ] shadcn/ui 컴포넌트 설치: `npx shadcn@latest add form textarea label button`
 - [ ] react-hook-form, zod, @hookform/resolvers 설치
-- [ ] Server Actions 파일 생성 (`app/actions/blog.ts`)
-- [ ] Supabase RLS 정책 확인
+- [ ] Mock Data 함수 확장 (`lib/data/mockBlogs.ts`)
+- [ ] 로컬 상태 관리 (Context API 또는 useState)
 
-### 1. TitleInput 컴포넌트
+### 1. Mock Data 함수 확장
+**상태:** - [ ] 미완료 / - [x] 완료
+**파일:** `lib/data/mockBlogs.ts`
+
+**요구사항:**
+- [ ] addMockBlog - 새 글 추가 함수
+- [ ] updateMockBlog - 글 수정 함수
+- [ ] deleteMockBlog - 글 삭제 함수
+- [ ] 클라이언트 사이드에서 호출 가능하도록 설계
+
+**의존성:**
+- types/blog.ts: Blog 인터페이스
+
+**기본 구조:**
+```typescript
+// lib/data/mockBlogs.ts
+import type { Blog } from "@/types/blog"
+
+// 기존 mockBlogs 배열...
+
+// 새 글 추가 (로컬 배열 조작)
+export function addMockBlog(title: string, content: string, authorName: string): Blog {
+  const newBlog: Blog = {
+    id: String(mockBlogs.length + 1),
+    title,
+    content,
+    author_id: "current_user", // 임시 사용자 ID
+    author_name: authorName,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+
+  mockBlogs.unshift(newBlog) // 배열 앞에 추가
+  return newBlog
+}
+
+// 글 수정
+export function updateMockBlog(id: string, title: string, content: string): Blog | null {
+  const index = mockBlogs.findIndex(blog => blog.id === id)
+  if (index === -1) return null
+
+  mockBlogs[index] = {
+    ...mockBlogs[index],
+    title,
+    content,
+    updated_at: new Date().toISOString()
+  }
+
+  return mockBlogs[index]
+}
+
+// 글 삭제
+export function deleteMockBlog(id: string): boolean {
+  const index = mockBlogs.findIndex(blog => blog.id === id)
+  if (index === -1) return false
+
+  mockBlogs.splice(index, 1)
+  return true
+}
+```
+
+**구현 세부사항:**
+- 실제 앱에서는 배열 조작이 아닌 API 호출로 대체
+- ID는 간단히 숫자 증가로 생성 (실제로는 UUID 사용)
+- author_id는 임시로 "current_user" 사용
+- unshift()로 새 글을 배열 맨 앞에 추가
+
+**완료 조건:**
+- [ ] 함수 3개 추가 완료
+- [ ] export 확인
+- [ ] 타입 안정성 확인
+
+---
+
+### 2. TitleInput 컴포넌트
 **상태:** - [ ] 미완료 / - [x] 완료
 **파일:** `app/components/blog/TitleInput.tsx`
 
@@ -89,7 +165,7 @@ export function TitleInput({ form }: TitleInputProps) {
 
 ---
 
-### 2. ContentTextarea 컴포넌트
+### 3. ContentTextarea 컴포넌트
 **상태:** - [ ] 미완료 / - [x] 완료
 **파일:** `app/components/blog/ContentTextarea.tsx`
 
@@ -161,7 +237,7 @@ export function ContentTextarea({ form }: ContentTextareaProps) {
 
 ---
 
-### 3. FormActions 컴포넌트
+### 4. FormActions 컴포넌트
 **상태:** - [ ] 미완료 / - [x] 완료
 **파일:** `app/components/blog/FormActions.tsx`
 
@@ -229,7 +305,7 @@ export function FormActions({
 
 ---
 
-### 4. BlogForm 컴포넌트
+### 5. BlogForm 컴포넌트
 **상태:** - [ ] 미완료 / - [x] 완료
 **파일:** `app/components/blog/BlogForm.tsx`
 
@@ -239,7 +315,7 @@ export function FormActions({
 - [ ] Zod 유효성 검증
 - [ ] TitleInput, ContentTextarea, FormActions 통합
 - [ ] 작성/수정 모드 지원 (initialData prop)
-- [ ] Server Action 호출
+- [ ] Mock Data 조작 함수 호출
 - [ ] 성공 시 상세 페이지로 이동
 - [ ] 에러 처리 (toast 또는 alert)
 
@@ -248,7 +324,7 @@ export function FormActions({
 - react-hook-form
 - zod, @hookform/resolvers
 - TitleInput, ContentTextarea, FormActions
-- app/actions/blog.ts: createBlog, updateBlog
+- lib/data/mockBlogs.ts: addMockBlog, updateMockBlog
 
 **기본 구조:**
 ```typescript
@@ -262,7 +338,7 @@ import { Form } from "@/components/ui/form"
 import { TitleInput } from "./TitleInput"
 import { ContentTextarea } from "./ContentTextarea"
 import { FormActions } from "./FormActions"
-import { createBlog, updateBlog } from "@/app/actions/blog"
+import { addMockBlog, updateMockBlog } from "@/lib/data/mockBlogs"
 import type { Blog } from "@/types/blog"
 
 const blogSchema = z.object({
@@ -290,20 +366,22 @@ export function BlogForm({ initialData, mode }: BlogFormProps) {
 
   async function onSubmit(data: BlogFormData) {
     try {
+      let blog: Blog | null
+
       if (mode === "create") {
-        const result = await createBlog(data)
-        if (result.success) {
-          router.push(`/blog/${result.data.id}`)
-        } else {
-          alert(result.error)
-        }
+        // Mock 데이터에 새 글 추가
+        blog = addMockBlog(data.title, data.content, "John Doe")
       } else {
-        const result = await updateBlog(initialData!.id, data)
-        if (result.success) {
-          router.push(`/blog/${result.data.id}`)
-        } else {
-          alert(result.error)
-        }
+        // Mock 데이터 수정
+        blog = updateMockBlog(initialData!.id, data.title, data.content)
+      }
+
+      if (blog) {
+        // 성공 시 상세 페이지로 이동
+        router.push(`/blog/${blog.id}`)
+        router.refresh() // 페이지 새로고침
+      } else {
+        alert("Failed to save post")
       }
     } catch (error) {
       console.error("Error submitting form:", error)
@@ -330,7 +408,8 @@ export function BlogForm({ initialData, mode }: BlogFormProps) {
 - Zod 스키마로 유효성 검증 (title: 1-200자, content: 필수)
 - defaultValues로 초기값 설정 (수정 모드)
 - mode prop으로 작성/수정 모드 구분
-- Server Action 호출 후 성공 시 상세 페이지 이동
+- Mock Data 조작 함수 호출 후 성공 시 상세 페이지 이동
+- router.refresh()로 페이지 새로고침 (Mock 데이터 반영)
 - 에러 시 alert 표시 (추후 toast로 개선 가능)
 - space-y-6으로 필드 간격
 
@@ -344,227 +423,28 @@ export function BlogForm({ initialData, mode }: BlogFormProps) {
 
 ---
 
-### 5. Server Actions 구현
-**상태:** - [ ] 미완료 / - [x] 완료
-**파일:** `app/actions/blog.ts`
-
-**요구사항:**
-- [ ] "use server" 지시어
-- [ ] createBlog: 새 글 작성
-- [ ] updateBlog: 글 수정
-- [ ] deleteBlog: 글 삭제
-- [ ] 권한 확인 (로그인, 작성자 확인)
-- [ ] Supabase 연동
-- [ ] 에러 처리
-
-**의존성:**
-- lib/supabase/server: createClient
-- types/blog.ts: Blog 인터페이스
-
-**기본 구조:**
-```typescript
-"use server"
-
-import { createClient } from "@/lib/supabase/server"
-import { revalidatePath } from "next/cache"
-import type { Blog } from "@/types/blog"
-
-interface BlogInput {
-  title: string
-  content: string
-}
-
-interface ActionResult<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-}
-
-export async function createBlog(input: BlogInput): Promise<ActionResult<Blog>> {
-  try {
-    const supabase = await createClient()
-
-    // 로그인 확인
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return { success: false, error: "You must be logged in to create a post" }
-    }
-
-    // 사용자 프로필 가져오기
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("user_id", user.id)
-      .single()
-
-    const authorName = profile
-      ? `${profile.first_name} ${profile.last_name}`.trim()
-      : user.email?.split("@")[0] || "Anonymous"
-
-    // 블로그 생성
-    const { data, error } = await supabase
-      .from("blogs")
-      .insert({
-        title: input.title,
-        content: input.content,
-        author_id: user.id,
-        author_name: authorName
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error creating blog:", error)
-      return { success: false, error: "Failed to create post" }
-    }
-
-    revalidatePath("/")
-    return { success: true, data }
-  } catch (error) {
-    console.error("Unexpected error:", error)
-    return { success: false, error: "An unexpected error occurred" }
-  }
-}
-
-export async function updateBlog(
-  id: string,
-  input: BlogInput
-): Promise<ActionResult<Blog>> {
-  try {
-    const supabase = await createClient()
-
-    // 로그인 확인
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return { success: false, error: "You must be logged in to update a post" }
-    }
-
-    // 권한 확인
-    const { data: blog } = await supabase
-      .from("blogs")
-      .select("author_id")
-      .eq("id", id)
-      .single()
-
-    if (!blog || blog.author_id !== user.id) {
-      return { success: false, error: "You don't have permission to update this post" }
-    }
-
-    // 블로그 수정
-    const { data, error } = await supabase
-      .from("blogs")
-      .update({
-        title: input.title,
-        content: input.content,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error updating blog:", error)
-      return { success: false, error: "Failed to update post" }
-    }
-
-    revalidatePath("/")
-    revalidatePath(`/blog/${id}`)
-    return { success: true, data }
-  } catch (error) {
-    console.error("Unexpected error:", error)
-    return { success: false, error: "An unexpected error occurred" }
-  }
-}
-
-export async function deleteBlog(id: string): Promise<ActionResult> {
-  try {
-    const supabase = await createClient()
-
-    // 로그인 확인
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return { success: false, error: "You must be logged in to delete a post" }
-    }
-
-    // 권한 확인
-    const { data: blog } = await supabase
-      .from("blogs")
-      .select("author_id")
-      .eq("id", id)
-      .single()
-
-    if (!blog || blog.author_id !== user.id) {
-      return { success: false, error: "You don't have permission to delete this post" }
-    }
-
-    // 블로그 삭제
-    const { error } = await supabase
-      .from("blogs")
-      .delete()
-      .eq("id", id)
-
-    if (error) {
-      console.error("Error deleting blog:", error)
-      return { success: false, error: "Failed to delete post" }
-    }
-
-    revalidatePath("/")
-    return { success: true }
-  } catch (error) {
-    console.error("Unexpected error:", error)
-    return { success: false, error: "An unexpected error occurred" }
-  }
-}
-```
-
-**구현 세부사항:**
-- "use server" 지시어로 Server Actions 선언
-- ActionResult 인터페이스로 통일된 반환 타입
-- createBlog: 로그인 확인 → 프로필 조회 → 블로그 생성
-- updateBlog: 로그인 확인 → 권한 확인 → 블로그 수정
-- deleteBlog: 로그인 확인 → 권한 확인 → 블로그 삭제
-- revalidatePath로 캐시 무효화
-- 모든 함수에서 try-catch로 에러 처리
-
-**완료 조건:**
-- [ ] createBlog 동작 확인
-- [ ] updateBlog 동작 확인
-- [ ] deleteBlog 동작 확인
-- [ ] 권한 확인 동작 확인
-- [ ] 에러 처리 확인
-
----
-
 ### 6. NewPostPage 구현
 **상태:** - [ ] 미완료 / - [x] 완료
 **파일:** `app/blog/new/page.tsx`
 
 **요구사항:**
-- [ ] Server Component
-- [ ] 로그인 확인 (미들웨어에서 처리 또는 리다이렉트)
+- [ ] Client Component ("use client")
 - [ ] BlogForm 컴포넌트 렌더링 (mode="create")
 - [ ] 중앙 정렬 컨테이너 (max-w-3xl)
 - [ ] 페이지 제목 "Create New Post"
 
+**참고**: 로그인 확인은 추후 Supabase 연동 시 추가
+
 **의존성:**
 - BlogForm 컴포넌트
-- lib/supabase/server: createClient
-- next/navigation: redirect
 
 **기본 구조:**
 ```typescript
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
 import { BlogForm } from "@/components/blog/BlogForm"
 
-export default async function NewPostPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login?redirect=/blog/new")
-  }
-
+export default function NewPostPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">Create New Post</h1>
@@ -575,13 +455,11 @@ export default async function NewPostPage() {
 ```
 
 **구현 세부사항:**
-- Server Component에서 로그인 확인
-- 미로그인 시 로그인 페이지로 리다이렉트 (redirect 파라미터 포함)
+- Client Component로 구현 (BlogForm이 Client Component이므로)
 - max-w-3xl로 폼 너비 제한, mx-auto로 중앙 정렬
 - BlogForm에 mode="create" 전달
 
 **완료 조건:**
-- [ ] 로그인 확인 동작 확인
 - [ ] 폼 렌더링 확인
 - [ ] 레이아웃 확인
 
@@ -592,55 +470,39 @@ export default async function NewPostPage() {
 **파일:** `app/blog/[id]/edit/page.tsx`
 
 **요구사항:**
-- [ ] Server Component
-- [ ] 로그인 및 권한 확인
-- [ ] Supabase에서 블로그 데이터 페칭
+- [ ] Client Component ("use client")
+- [ ] Mock 데이터에서 블로그 가져오기
 - [ ] BlogForm 컴포넌트 렌더링 (mode="edit", initialData)
 - [ ] 중앙 정렬 컨테이너 (max-w-3xl)
 - [ ] 페이지 제목 "Edit Post"
-- [ ] 권한 없음 시 403 또는 리다이렉트
+- [ ] 블로그 없음 시 404 또는 에러 메시지
 
 **의존성:**
 - BlogForm 컴포넌트
-- lib/supabase/server: createClient
-- next/navigation: redirect, notFound
-- types/blog.ts: Blog 인터페이스
+- lib/data/mockBlogs.ts: getMockBlogById
 
 **기본 구조:**
 ```typescript
-import { redirect, notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useParams } from "next/navigation"
 import { BlogForm } from "@/components/blog/BlogForm"
-import type { Blog } from "@/types/blog"
+import { getMockBlogById } from "@/lib/data/mockBlogs"
 
-interface EditPostPageProps {
-  params: Promise<{ id: string }>
-}
+export default function EditPostPage() {
+  const params = useParams()
+  const id = params.id as string
 
-export default async function EditPostPage({ params }: EditPostPageProps) {
-  const { id } = await params
-  const supabase = await createClient()
+  // Mock 데이터에서 블로그 가져오기
+  const blog = getMockBlogById(id)
 
-  // 로그인 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect(`/auth/login?redirect=/blog/${id}/edit`)
-  }
-
-  // 블로그 데이터 가져오기
-  const { data: blog, error } = await supabase
-    .from("blogs")
-    .select("*")
-    .eq("id", id)
-    .single()
-
-  if (error || !blog) {
-    notFound()
-  }
-
-  // 권한 확인
-  if (blog.author_id !== user.id) {
-    redirect(`/blog/${id}`)
+  if (!blog) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-8 text-center">
+        <h1 className="text-4xl font-bold mb-4">Post Not Found</h1>
+        <p className="text-gray-600">The post you're looking for doesn't exist.</p>
+      </div>
+    )
   }
 
   return (
@@ -653,34 +515,38 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 ```
 
 **구현 세부사항:**
-- params를 await로 받아 id 추출
-- 로그인 확인 → 블로그 데이터 페칭 → 권한 확인 순서
-- 블로그 없음 시 notFound() 호출 (404 페이지)
-- 권한 없음 시 상세 페이지로 리다이렉트
+- useParams()로 id 추출
+- getMockBlogById()로 블로그 데이터 가져오기
+- 블로그 없음 시 에러 메시지 표시
 - BlogForm에 mode="edit", initialData 전달
 
 **완료 조건:**
-- [ ] 로그인 확인 동작 확인
-- [ ] 권한 확인 동작 확인
 - [ ] 블로그 데이터 로딩 확인
 - [ ] 폼 초기값 설정 확인
+- [ ] 404 처리 확인
 - [ ] 레이아웃 확인
 
 ---
 
 ## 구현 순서
 
-1. **shadcn/ui 설치**: form, textarea, label 컴포넌트
-2. **npm 패키지 설치**: react-hook-form, zod, @hookform/resolvers
-3. **기본 입력 컴포넌트**: TitleInput, ContentTextarea
-4. **액션 컴포넌트**: FormActions
-5. **Server Actions**: `app/actions/blog.ts` 구현
+1. **Mock Data 함수 확장**: `lib/data/mockBlogs.ts`에 CRUD 함수 추가
+2. **shadcn/ui 설치**: form, textarea, label 컴포넌트
+3. **npm 패키지 설치**: react-hook-form, zod, @hookform/resolvers
+4. **기본 입력 컴포넌트**: TitleInput, ContentTextarea
+5. **액션 컴포넌트**: FormActions
 6. **통합 폼**: BlogForm 컴포넌트
 7. **페이지 구현**: NewPostPage, EditPostPage
 
 ---
 
 ## 검증 체크리스트
+
+### Mock Data 함수
+- [ ] addMockBlog 동작 확인
+- [ ] updateMockBlog 동작 확인
+- [ ] deleteMockBlog 동작 확인
+- [ ] 배열 조작 확인
 
 ### TitleInput
 - [ ] 입력 필드 렌더링 확인
@@ -701,31 +567,51 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 - [ ] 작성 모드 동작 확인
 - [ ] 수정 모드 동작 확인
 - [ ] 유효성 검증 동작 확인
-- [ ] 제출 시 Server Action 호출 확인
+- [ ] 제출 시 Mock 데이터 조작 확인
 - [ ] 성공 시 페이지 이동 확인
 - [ ] 에러 처리 확인
 
-### Server Actions
-- [ ] createBlog 동작 확인
-- [ ] updateBlog 동작 확인
-- [ ] deleteBlog 동작 확인
-- [ ] 권한 확인 동작 확인
-- [ ] revalidatePath 동작 확인
-
 ### NewPostPage
-- [ ] 로그인 확인 동작 확인
 - [ ] 폼 렌더링 확인
 - [ ] 글 작성 완료 확인
 
 ### EditPostPage
-- [ ] 로그인 확인 동작 확인
-- [ ] 권한 확인 동작 확인
 - [ ] 초기값 설정 확인
 - [ ] 글 수정 완료 확인
+- [ ] 404 처리 확인
 
 ---
 
 ## 참고사항
+
+### Mock Data 영속성 문제
+```typescript
+// 현재 구현은 페이지 새로고침 시 데이터가 사라짐
+// 해결 방법 1: localStorage 사용
+// 해결 방법 2: Context API로 전역 상태 관리
+// 해결 방법 3: Zustand 같은 상태 관리 라이브러리 사용
+
+// 예시: localStorage 사용
+export function addMockBlog(title: string, content: string, authorName: string): Blog {
+  const newBlog: Blog = { /* ... */ }
+  mockBlogs.unshift(newBlog)
+
+  // localStorage에 저장
+  if (typeof window !== "undefined") {
+    localStorage.setItem("mockBlogs", JSON.stringify(mockBlogs))
+  }
+
+  return newBlog
+}
+
+// 초기 로드 시 localStorage에서 복원
+if (typeof window !== "undefined") {
+  const saved = localStorage.getItem("mockBlogs")
+  if (saved) {
+    mockBlogs.splice(0, mockBlogs.length, ...JSON.parse(saved))
+  }
+}
+```
 
 ### Zod 스키마 확장
 ```typescript
@@ -741,40 +627,9 @@ const blogSchema = z.object({
 })
 ```
 
-### Supabase RLS 정책
-```sql
--- blogs 테이블 RLS 정책
-ALTER TABLE blogs ENABLE ROW LEVEL SECURITY;
-
--- 모든 사용자가 읽기 가능
-CREATE POLICY "Anyone can read blogs"
-ON blogs FOR SELECT
-TO authenticated, anon
-USING (true);
-
--- 로그인한 사용자만 생성 가능
-CREATE POLICY "Authenticated users can create blogs"
-ON blogs FOR INSERT
-TO authenticated
-WITH CHECK (auth.uid() = author_id);
-
--- 작성자만 수정 가능
-CREATE POLICY "Authors can update their blogs"
-ON blogs FOR UPDATE
-TO authenticated
-USING (auth.uid() = author_id)
-WITH CHECK (auth.uid() = author_id);
-
--- 작성자만 삭제 가능
-CREATE POLICY "Authors can delete their blogs"
-ON blogs FOR DELETE
-TO authenticated
-USING (auth.uid() = author_id);
-```
-
 ### 에러 처리 개선 (toast 사용)
 ```typescript
-// 추후 shadcn/ui toast 컴포넌트 사용
+// shadcn/ui toast 컴포넌트 사용
 import { useToast } from "@/components/ui/use-toast"
 
 const { toast } = useToast()
@@ -788,10 +643,17 @@ toast({
 // 에러 메시지
 toast({
   title: "Error",
-  description: result.error,
+  description: "Failed to save post.",
   variant: "destructive",
 })
 ```
+
+### 백엔드 연동 준비
+- Mock Data 함수는 추후 Server Actions로 교체
+- `addMockBlog()` → `createBlog()` Server Action
+- `updateMockBlog()` → `updateBlog()` Server Action
+- `deleteMockBlog()` → `deleteBlog()` Server Action
+- BlogForm은 그대로 유지, 데이터 소스만 변경
 
 ### 폼 상태 개선
 - 제출 중 로딩 스피너 추가
@@ -808,5 +670,4 @@ toast({
 ### 성능 최적화
 - react-hook-form의 uncontrolled inputs 사용
 - Zod 스키마 캐싱
-- Server Actions에서 불필요한 쿼리 최소화
-- revalidatePath로 필요한 경로만 무효화
+- Mock Data 조작 시 불필요한 렌더링 최소화

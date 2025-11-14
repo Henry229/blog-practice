@@ -82,31 +82,31 @@
 
 **버튼**
 
-- [ ] Button - 기본 버튼 컴포넌트 (primary, secondary, danger variants)
-- [ ] IconButton - 아이콘 버튼
+- [x] Button - 기본 버튼 컴포넌트 (primary, secondary, danger variants)
+- [x] IconButton - 아이콘 버튼
 
 **카드**
 
-- [ ] Card - 기본 카드 컨테이너 (흰 배경, 그림자, 둥근 모서리)
+- [x] Card - 기본 카드 컨테이너 (흰 배경, 그림자, 둥근 모서리)
 
 **입력 필드**
 
-- [ ] Input - 텍스트 입력 필드
-- [ ] Textarea - 텍스트 영역 입력
-- [ ] Label - 입력 필드 레이블
+- [x] Input - 텍스트 입력 필드
+- [x] Textarea - 텍스트 영역 입력
+- [x] Label - 입력 필드 레이블
 
 **피드백**
 
-- [ ] LoadingSpinner - 로딩 스피너
-- [ ] ErrorMessage - 에러 메시지 표시
-- [ ] SuccessMessage - 성공 메시지 표시
-- [ ] Toast - 토스트 알림 (선택사항)
+- [x] LoadingSpinner - 로딩 스피너
+- [x] ErrorMessage - 에러 메시지 표시
+- [x] SuccessMessage - 성공 메시지 표시
+- [x] Toast - 토스트 알림 (선택사항)
 
 **기타**
 
-- [ ] Avatar - 사용자 아바타 (이니셜 표시)
-- [ ] Badge - 배지 (예: 새 글, 댓글 수)
-- [ ] Divider - 구분선
+- [x] Avatar - 사용자 아바타 (이니셜 표시)
+- [x] Badge - 배지 (예: 새 글, 댓글 수)
+- [x] Divider - 구분선
 
 ---
 
@@ -144,29 +144,27 @@
 
 ### 8. 유틸리티 & 라이브러리 (Utilities)
 
-**localStorage 관리**
+**Mock Data 관리 (프론트엔드 개발용)**
 
-- [ ] storage.ts - localStorage CRUD 유틸 함수
-  - [ ] getUsers() - 모든 사용자 가져오기
-  - [ ] createUser() - 사용자 생성
-  - [ ] getUserByEmail() - 이메일로 사용자 찾기
-  - [ ] getBlogs() - 모든 블로그 가져오기
-  - [ ] getBlog() - 특정 블로그 가져오기
-  - [ ] createBlog() - 블로그 생성
-  - [ ] updateBlog() - 블로그 수정
-  - [ ] deleteBlog() - 블로그 삭제
-  - [ ] canEditBlog() - 수정 권한 확인
-  - [ ] getComments() - 댓글 가져오기
-  - [ ] createComment() - 댓글 생성
+- [ ] lib/data/mockBlogs.ts - Mock 블로그 데이터 및 CRUD 함수
+  - [ ] mockBlogs - 샘플 블로그 데이터 배열 (10-15개)
+  - [ ] getMockBlogs() - 모든 블로그 가져오기
+  - [ ] getMockBlogById(id) - 특정 블로그 가져오기
+  - [ ] searchMockBlogs(query) - 블로그 검색
+  - [ ] addMockBlog(title, content, authorName) - 새 글 추가
+  - [ ] updateMockBlog(id, title, content) - 글 수정
+  - [ ] deleteMockBlog(id) - 글 삭제
 
-**인증 관리**
+- [ ] lib/data/mockComments.ts - Mock 댓글 데이터 및 CRUD 함수
+  - [ ] mockComments - 샘플 댓글 데이터 배열
+  - [ ] getMockComments(blogId) - 특정 글의 댓글 가져오기
+  - [ ] addMockComment(blogId, content, authorName) - 댓글 추가
+  - [ ] deleteMockComment(id) - 댓글 삭제
 
-- [ ] auth.ts - 인증 관련 유틸 함수
-  - [ ] signup() - 회원가입
-  - [ ] login() - 로그인
-  - [ ] logout() - 로그아웃
-  - [ ] getCurrentUser() - 현재 사용자 가져오기
-  - [ ] isAuthenticated() - 인증 여부 확인
+**인증 관리 (추후 Supabase 연동 예정)**
+
+- [ ] Supabase Auth 연동은 백엔드 구현 단계에서 진행
+- [ ] 현재는 프론트엔드 UI만 구현 (Mock 사용자: "John Doe")
 
 **날짜 포맷팅**
 
@@ -199,14 +197,20 @@
 
 ## 추가 고려사항
 
-### API/Services (localStorage 기반)
+### API/Services (Mock Data 기반 → 추후 Supabase 연동)
 
-- [ ] Authentication Service - 회원가입, 로그인, 로그아웃 처리
-- [ ] Blog Service - 블로그 CRUD 작업
-- [ ] Comment Service - 댓글 CRUD 작업
-- [ ] Session Management - 세션 유지 및 관리
+**현재 구현 (MVP 프론트엔드)**
+- [ ] Mock Blog Service - Mock 데이터로 블로그 CRUD 작업 (`lib/data/mockBlogs.ts`)
+- [ ] Mock Comment Service - Mock 데이터로 댓글 CRUD 작업 (`lib/data/mockComments.ts`)
+- [ ] Authentication Service - 추후 Supabase Auth로 구현 예정
 
-### 데이터 모델 (LocalStorage Schema)
+**추후 구현 (백엔드 연동)**
+- [ ] Supabase Database - blogs, comments 테이블
+- [ ] Supabase Auth - 인증 및 권한 관리
+- [ ] Server Actions - createBlog, updateBlog, deleteBlog, createComment 등
+- [ ] Row Level Security (RLS) - 데이터 접근 권한 정책
+
+### 데이터 모델 (Mock Data Schema → Supabase 테이블 구조와 동일)
 
 **User**
 
@@ -305,22 +309,61 @@
 
 ## 기술 스택 요약
 
+**현재 구현 (MVP 프론트엔드)**
 - **프레임워크**: Next.js 15 (App Router)
 - **언어**: TypeScript
-- **스타일링**: Tailwind CSS
-- **상태 관리**: Context API
-- **데이터 저장**: localStorage
+- **스타일링**: Tailwind CSS v4
+- **UI 컴포넌트**: shadcn/ui (Radix UI 기반)
+- **폼 관리**: react-hook-form + Zod
+- **데이터**: Mock Data (메모리 기반, `lib/data/` 폴더)
 - **배포**: Vercel
+
+**추후 추가 (백엔드 연동)**
+- **데이터베이스**: Supabase (PostgreSQL)
+- **인증**: Supabase Auth
+- **실시간**: Supabase Realtime (선택사항)
+- **스토리지**: Supabase Storage (이미지 업로드용, 선택사항)
 
 ---
 
 ## 참고사항
 
-1. **재사용 가능한 컴포넌트 우선**: Button, Input, Card 등 기본 UI 컴포넌트를 먼저 만들고 조합
-2. **권한 체크는 여러 레벨에서**:
-   - UI 레벨 (버튼 표시/숨김)
-   - 페이지 레벨 (ProtectedRoute)
-   - 데이터 레벨 (storage 함수)
-3. **검색/페이지네이션은 선택사항**: MVP에서는 제외 가능, PDF에는 있지만 PRD에는 out of scope
-4. **에러 처리**: 빈 제목, 중복 이메일, 권한 없음 등 기본적인 에러만 처리
-5. **반응형**: 모바일 우선 (1열 → 2열 → 3열 그리드)
+1. **재사용 가능한 컴포넌트 우선**: shadcn/ui 기본 컴포넌트 (Button, Input, Card)를 먼저 설치하고 조합
+2. **Mock Data 기반 개발**:
+   - 프론트엔드 UI는 Mock Data로 먼저 구현
+   - 백엔드(Supabase)는 별도 단계에서 구현
+   - Mock Data 구조는 Supabase 테이블 구조와 동일하게 설계
+   - 추후 Mock 함수 → Server Actions로 교체만 하면 연동 완료
+3. **검색 바 위치**: 헤더 중앙에 배치 (로고 - 검색바 - 네비게이션)
+4. **권한 체크는 추후 구현**:
+   - 현재는 Mock 사용자 "John Doe"로 모든 작업 가능
+   - Supabase Auth 연동 시 실제 권한 체크 추가
+5. **검색/페이지네이션**: 기본 구현 포함 (Mock Data 필터링으로 구현)
+6. **에러 처리**: 기본 alert 사용 → 추후 toast로 개선
+7. **반응형**: 모바일 우선 (1열 → 2열 → 3열 그리드)
+
+---
+
+## 개발 단계 (Phase)
+
+### Phase 1: 프론트엔드 UI (현재)
+- Mock Data 기반 UI 컴포넌트 구현
+- 검색, 필터링, 페이지네이션 등 클라이언트 기능
+- shadcn/ui + Tailwind CSS 스타일링
+- 반응형 디자인
+
+### Phase 2: 백엔드 연동 (추후)
+- Supabase 프로젝트 설정
+- Database 테이블 생성 (blogs, comments, profiles)
+- Supabase Auth 통합
+- Server Actions 구현
+- RLS 정책 설정
+- Mock 함수 → Server Actions 교체
+
+### Phase 3: 최적화 & 배포 (최종)
+- 성능 최적화
+- SEO 메타데이터
+- 에러 처리 개선 (toast)
+- 이미지 업로드 (Supabase Storage)
+- 실시간 업데이트 (Supabase Realtime)
+- Vercel 배포

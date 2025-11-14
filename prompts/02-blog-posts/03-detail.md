@@ -7,7 +7,7 @@
 - 작성자 정보 (이름, 날짜)
 - 수정/삭제 버튼 (작성자만)
 - 삭제 확인 다이얼로그
-- 댓글 섹션 통합 (추후 구현)
+- 댓글 섹션 통합 (필수 구현)
 
 ---
 
@@ -15,8 +15,8 @@
 
 ### 0. 사전 준비
 - [ ] shadcn/ui 컴포넌트 설치: `npx shadcn@latest add button alert-dialog`
-- [ ] Supabase 테이블 구조 확인 (blogs 테이블)
-- [ ] Server Actions 확인 (`app/actions/blog.ts`)
+- [ ] Mock Data 확인 (`lib/data/mockBlogs.ts`)
+- [ ] Mock CRUD 함수 확인 (getMockBlogById, updateMockBlog, deleteMockBlog)
 
 ### 1. BlogHeader 컴포넌트
 **상태:** - [ ] 미완료 / - [x] 완료
@@ -138,34 +138,33 @@ export function BlogContent({ content }: BlogContentProps) {
 - [ ] Server Component
 - [ ] 수정 버튼 (Edit, 파란색, Link)
 - [ ] 삭제 버튼 (Delete, 빨간색, 다이얼로그 트리거)
-- [ ] 작성자만 표시 (서버에서 확인)
+- [ ] Mock 사용자 "John Doe"인 경우만 표시 (현재는 모든 글에 표시)
 - [ ] 버튼 간격 (gap-2)
 - [ ] 우측 정렬
 
 **의존성:**
 - shadcn/ui: button
 - Next.js: Link
-- lib/supabase/server: createClient
 - DeleteConfirmDialog 컴포넌트
 
 **기본 구조:**
 ```typescript
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/server"
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 
 interface BlogActionsProps {
   blogId: string
-  authorId: string
+  authorName: string
 }
 
-export async function BlogActions({ blogId, authorId }: BlogActionsProps) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export function BlogActions({ blogId, authorName }: BlogActionsProps) {
+  // 현재는 Mock 사용자 "John Doe"만 수정/삭제 가능
+  // 추후 Supabase Auth 연동 시 실제 사용자 확인으로 변경
+  const currentUser = "John Doe"
 
   // 작성자가 아니면 아무것도 표시하지 않음
-  if (!user || user.id !== authorId) {
+  if (currentUser !== authorName) {
     return null
   }
 
@@ -181,11 +180,13 @@ export async function BlogActions({ blogId, authorId }: BlogActionsProps) {
 ```
 
 **구현 세부사항:**
-- Server Component에서 사용자 확인
-- user.id === authorId인 경우만 버튼 표시
+- Server Component로 구현 (추후 인증 확인 용이)
+- 현재는 Mock 사용자 "John Doe"만 버튼 표시
+- authorName === "John Doe"인 경우만 버튼 표시
 - Edit 버튼은 Link로 수정 페이지 이동
 - DeleteConfirmDialog는 Client Component로 별도 구현
 - flex items-center justify-end gap-2로 우측 정렬
+- 추후 Supabase Auth 연동 시 실제 사용자 확인 로직으로 교체
 
 **완료 조건:**
 - [ ] 작성자만 버튼 표시 확인
@@ -206,13 +207,13 @@ export async function BlogActions({ blogId, authorId }: BlogActionsProps) {
 - [ ] "Are you sure?" 메시지
 - [ ] "This action cannot be undone." 경고
 - [ ] 취소/삭제 버튼
-- [ ] Server Action 호출
+- [ ] Mock Data 삭제 함수 호출
 - [ ] 성공 시 홈페이지로 이동
 
 **의존성:**
 - shadcn/ui: alert-dialog, button
 - next/navigation: useRouter
-- app/actions/blog.ts: deleteBlog
+- lib/data/mockBlogs.ts: deleteMockBlog
 
 **기본 구조:**
 ```typescript
@@ -232,7 +233,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { deleteBlog } from "@/app/actions/blog"
+import { deleteMockBlog } from "@/lib/data/mockBlogs"
 
 interface DeleteConfirmDialogProps {
   blogId: string
@@ -245,11 +246,13 @@ export function DeleteConfirmDialog({ blogId }: DeleteConfirmDialogProps) {
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      const result = await deleteBlog(blogId)
-      if (result.success) {
+      const success = deleteMockBlog(blogId)
+      if (success) {
+        // Mock Data 삭제 성공
         router.push("/")
+        router.refresh() // 페이지 새로고침으로 업데이트된 목록 표시
       } else {
-        alert(result.error)
+        alert("Blog post not found")
         setIsDeleting(false)
       }
     } catch (error) {
@@ -292,11 +295,13 @@ export function DeleteConfirmDialog({ blogId }: DeleteConfirmDialogProps) {
 **구현 세부사항:**
 - AlertDialog로 확인 다이얼로그 구현
 - useState로 삭제 중 상태 관리
-- handleDelete에서 deleteBlog Server Action 호출
+- handleDelete에서 deleteMockBlog 함수 호출 (Mock Data)
 - 성공 시 router.push("/")로 홈페이지 이동
+- router.refresh()로 페이지 새로고침하여 업데이트된 목록 표시
 - 에러 시 alert 표시 및 상태 복원
 - 삭제 중일 때 버튼 비활성화 및 텍스트 변경
 - AlertDialogAction에 bg-red-600으로 빨간색 적용
+- 추후 Supabase 연동 시 deleteMockBlog → Server Action으로 교체
 
 **완료 조건:**
 - [ ] 삭제 버튼 클릭 시 다이얼로그 표시 확인
@@ -315,13 +320,14 @@ export function DeleteConfirmDialog({ blogId }: DeleteConfirmDialogProps) {
 **요구사항:**
 - [ ] Server Component
 - [ ] BlogHeader, BlogActions, BlogContent 통합
-- [ ] 댓글 섹션 포함 (추후 구현)
+- [ ] 댓글 섹션 포함 (필수 구현)
 - [ ] 적절한 간격 및 레이아웃
 
 **의존성:**
 - BlogHeader 컴포넌트
 - BlogActions 컴포넌트
 - BlogContent 컴포넌트
+- CommentSection 컴포넌트 (댓글 표시 + 작성 폼)
 - types/blog.ts: Blog 인터페이스
 
 **기본 구조:**
@@ -329,6 +335,7 @@ export function DeleteConfirmDialog({ blogId }: DeleteConfirmDialogProps) {
 import { BlogHeader } from "./BlogHeader"
 import { BlogActions } from "./BlogActions"
 import { BlogContent } from "./BlogContent"
+import { CommentSection } from "@/components/comments/CommentSection"
 import type { Blog } from "@/types/blog"
 
 interface BlogPostProps {
@@ -338,14 +345,14 @@ interface BlogPostProps {
 export function BlogPost({ blog }: BlogPostProps) {
   return (
     <article className="max-w-4xl mx-auto">
-      <BlogActions blogId={blog.id} authorId={blog.author_id} />
+      <BlogActions blogId={blog.id} authorName={blog.author_name} />
       <BlogHeader blog={blog} />
       <BlogContent content={blog.content} />
 
-      {/* 댓글 섹션 - 추후 구현 */}
+      {/* 댓글 섹션 */}
       <div className="mt-12 border-t pt-8">
         <h2 className="text-2xl font-bold mb-6">Comments</h2>
-        {/* CommentSection 컴포넌트 */}
+        <CommentSection blogId={blog.id} />
       </div>
     </article>
   )
@@ -355,9 +362,11 @@ export function BlogPost({ blog }: BlogPostProps) {
 **구현 세부사항:**
 - article 태그로 시맨틱 마크업
 - max-w-4xl로 최대 너비 제한, mx-auto로 중앙 정렬
-- BlogActions를 최상단에 배치
+- BlogActions를 최상단에 배치 (authorName 전달)
 - BlogHeader, BlogContent 순서로 배치
-- 댓글 섹션을 위한 공간 준비 (mt-12, border-t)
+- 댓글 섹션 통합 (CommentSection 컴포넌트)
+- mt-12, border-t로 댓글 섹션 구분
+- CommentSection에 blogId 전달하여 해당 글의 댓글 표시
 
 **완료 조건:**
 - [ ] 전체 레이아웃 확인
@@ -372,7 +381,7 @@ export function BlogPost({ blog }: BlogPostProps) {
 
 **요구사항:**
 - [ ] Server Component
-- [ ] Supabase에서 블로그 데이터 페칭
+- [ ] Mock Data에서 블로그 데이터 가져오기
 - [ ] BlogPost 컴포넌트 렌더링
 - [ ] 404 처리 (블로그 없음)
 - [ ] 메타데이터 설정 (제목, 설명)
@@ -380,17 +389,16 @@ export function BlogPost({ blog }: BlogPostProps) {
 
 **의존성:**
 - BlogPost 컴포넌트
-- lib/supabase/server: createClient
+- lib/data/mockBlogs.ts: getMockBlogById
 - next/navigation: notFound
 - types/blog.ts: Blog 인터페이스
 
 **기본 구조:**
 ```typescript
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getMockBlogById } from "@/lib/data/mockBlogs"
 import { BlogPost } from "@/components/blog/BlogPost"
 import type { Metadata } from "next"
-import type { Blog } from "@/types/blog"
 
 interface PostDetailPageProps {
   params: Promise<{ id: string }>
@@ -400,13 +408,7 @@ export async function generateMetadata(
   { params }: PostDetailPageProps
 ): Promise<Metadata> {
   const { id } = await params
-  const supabase = await createClient()
-
-  const { data: blog } = await supabase
-    .from("blogs")
-    .select("title, content")
-    .eq("id", id)
-    .single()
+  const blog = getMockBlogById(id)
 
   if (!blog) {
     return {
@@ -422,15 +424,9 @@ export async function generateMetadata(
 
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { id } = await params
-  const supabase = await createClient()
+  const blog = getMockBlogById(id)
 
-  const { data: blog, error } = await supabase
-    .from("blogs")
-    .select("*")
-    .eq("id", id)
-    .single()
-
-  if (error || !blog) {
+  if (!blog) {
     notFound()
   }
 
@@ -445,10 +441,11 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 **구현 세부사항:**
 - params를 await로 받아 id 추출
 - generateMetadata로 동적 메타데이터 생성
-- Supabase에서 blogs 테이블 조회 (id로 필터링)
+- getMockBlogById로 Mock Data에서 블로그 조회
 - 블로그 없음 시 notFound() 호출 (404 페이지)
 - BlogPost 컴포넌트에 blog 데이터 전달
 - max-w-7xl mx-auto px-4 py-8로 페이지 컨테이너
+- 추후 Supabase 연동 시 getMockBlogById → Supabase 쿼리로 교체
 
 **완료 조건:**
 - [ ] 블로그 데이터 페칭 확인
@@ -584,12 +581,7 @@ export function formatDate(dateString: string): string {
 ```typescript
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: blog } = await supabase
-    .from("blogs")
-    .select("title, content, author_name, created_at")
-    .eq("id", id)
-    .single()
+  const blog = getMockBlogById(id)
 
   if (!blog) {
     return { title: "Post Not Found" }
