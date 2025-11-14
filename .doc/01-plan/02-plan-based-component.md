@@ -119,10 +119,10 @@
 
 **블로그 페이지**
 
-- [ ] HomePage - 홈페이지 (블로그 목록) (/)
-- [ ] NewPostPage - 새 글 작성 페이지 (/blog/new)
-- [ ] PostDetailPage - 글 상세 페이지 (/blog/[id])
-- [ ] EditPostPage - 글 수정 페이지 (/blog/[id]/edit)
+- [x] HomePage - 홈페이지 (블로그 목록) (/)
+- [x] NewPostPage - 새 글 작성 페이지 (/blog/new)
+- [x] PostDetailPage - 글 상세 페이지 (/blog/[id])
+- [x] EditPostPage - 글 수정 페이지 (/blog/[id]/edit)
 
 ---
 
