@@ -146,52 +146,52 @@
 
 **Mock Data 관리 (프론트엔드 개발용)**
 
-- [ ] lib/data/mockBlogs.ts - Mock 블로그 데이터 및 CRUD 함수
-  - [ ] mockBlogs - 샘플 블로그 데이터 배열 (10-15개)
-  - [ ] getMockBlogs() - 모든 블로그 가져오기
-  - [ ] getMockBlogById(id) - 특정 블로그 가져오기
-  - [ ] searchMockBlogs(query) - 블로그 검색
-  - [ ] addMockBlog(title, content, authorName) - 새 글 추가
-  - [ ] updateMockBlog(id, title, content) - 글 수정
-  - [ ] deleteMockBlog(id) - 글 삭제
+- [x] lib/data/mockBlogs.ts - Mock 블로그 데이터 및 CRUD 함수
+  - [x] mockBlogs - 샘플 블로그 데이터 배열 (10-15개)
+  - [x] getMockBlogs() - 모든 블로그 가져오기
+  - [x] getMockBlogById(id) - 특정 블로그 가져오기
+  - [x] searchMockBlogs(query) - 블로그 검색
+  - [x] addMockBlog(title, content, authorName) - 새 글 추가
+  - [x] updateMockBlog(id, title, content) - 글 수정
+  - [x] deleteMockBlog(id) - 글 삭제
 
-- [ ] lib/data/mockComments.ts - Mock 댓글 데이터 및 CRUD 함수
-  - [ ] mockComments - 샘플 댓글 데이터 배열
-  - [ ] getMockComments(blogId) - 특정 글의 댓글 가져오기
-  - [ ] addMockComment(blogId, content, authorName) - 댓글 추가
-  - [ ] deleteMockComment(id) - 댓글 삭제
+- [x] lib/data/mockComments.ts - Mock 댓글 데이터 및 CRUD 함수
+  - [x] mockComments - 샘플 댓글 데이터 배열
+  - [x] getMockComments(blogId) - 특정 글의 댓글 가져오기
+  - [x] addMockComment(blogId, content, authorName) - 댓글 추가
+  - [x] deleteMockComment(id) - 댓글 삭제
 
 **인증 관리 (추후 Supabase 연동 예정)**
 
-- [ ] Supabase Auth 연동은 백엔드 구현 단계에서 진행
-- [ ] 현재는 프론트엔드 UI만 구현 (Mock 사용자: "John Doe")
+- [x] Supabase Auth 연동은 백엔드 구현 단계에서 진행
+- [x] 현재는 프론트엔드 UI만 구현 (Mock 사용자: "John Doe")
 
 **날짜 포맷팅**
 
-- [ ] formatDate() - 날짜 포맷 함수 (예: "Oct 26, 2023")
-- [ ] formatRelativeTime() - 상대 시간 (예: "2 hours ago")
+- [x] formatDate() - 날짜 포맷 함수 (예: "Oct 26, 2023")
+- [x] formatRelativeTime() - 상대 시간 (예: "2 hours ago")
 
 **텍스트 처리**
 
-- [ ] truncateText() - 텍스트 자르기 (미리보기용, 100자)
-- [ ] generateId() - UUID 생성
-- [ ] slugify() - URL 슬러그 생성 (선택사항)
+- [x] truncateText() - 텍스트 자르기 (미리보기용, 100자)
+- [x] generateId() - UUID 생성
+- [x] slugify() - URL 슬러그 생성 (선택사항)
 
 **검증**
 
-- [ ] validateEmail() - 이메일 유효성 검사
-- [ ] validatePassword() - 비밀번호 유효성 검사
-- [ ] validateBlogForm() - 블로그 폼 검증
+- [x] validateEmail() - 이메일 유효성 검사
+- [x] validatePassword() - 비밀번호 유효성 검사
+- [x] validateBlogForm() - 블로그 폼 검증
 
 ---
 
 ### 9. 타입 정의 (TypeScript Types)
 
-- [ ] types/user.ts - User, AuthUser 인터페이스
-- [ ] types/blog.ts - Blog 인터페이스
-- [ ] types/comment.ts - Comment 인터페이스
-- [ ] types/auth.ts - AuthContextType 인터페이스
-- [ ] types/storage.ts - LocalStorageData 인터페이스
+- [x] types/user.ts - User, AuthUser 인터페이스
+- [x] types/blog.ts - Blog 인터페이스
+- [x] types/comment.ts - Comment 인터페이스
+- [x] types/auth.ts - AuthContextType 인터페이스
+- [x] types/storage.ts - LocalStorageData 인터페이스
 
 ---
 
