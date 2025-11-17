@@ -109,6 +109,7 @@ Google OAuth를 사용하려면:
 1. [Google Cloud Console](https://console.cloud.google.com)에서 프로젝트 생성
 2. OAuth 2.0 클라이언트 ID 생성
 3. 승인된 리디렉션 URI 추가:
+
    ```
    https://your-project.supabase.co/auth/v1/callback
    ```
@@ -127,11 +128,11 @@ Google OAuth를 사용하려면:
 ```typescript
 export const authConfig = {
   redirects: {
-    afterLogin: '/dashboard',        // 로그인 후 이동할 경로
+    afterLogin: '/', // 로그인 후 이동할 경로
     afterSignup: '/auth/verify-email',
     afterLogout: '/auth/login',
     afterPasswordReset: '/auth/login',
-    afterEmailVerification: '/dashboard',
+    afterEmailVerification: '/',
   },
   // ...
 };
@@ -145,10 +146,10 @@ export const authConfig = {
 export const authConfig = {
   // ...
   protectedRoutes: [
-    '/dashboard',
+    '/',
     '/profile',
     '/settings',
-    '/admin',  // 새로 추가
+    '/admin', // 새로 추가
   ],
   // ...
 };
@@ -159,18 +160,16 @@ export const authConfig = {
 `app/actions/auth.ts`의 `signup` 함수에서 프로필 필드 수정:
 
 ```typescript
-const { error: profileError } = await supabase
-  .from('profiles')
-  .insert({
-    user_id: authData.user.id,
-    email: email,
-    first_name: firstName,
-    last_name: lastName,
-    mobile: mobile || null,
-    role: authConfig.profile.defaultRole,
-    // 추가 필드를 여기에 넣으세요
-    company: formData.get('company') as string,
-  });
+const { error: profileError } = await supabase.from('profiles').insert({
+  user_id: authData.user.id,
+  email: email,
+  first_name: firstName,
+  last_name: lastName,
+  mobile: mobile || null,
+  role: authConfig.profile.defaultRole,
+  // 추가 필드를 여기에 넣으세요
+  company: formData.get('company') as string,
+});
 ```
 
 데이터베이스 스키마도 함께 수정해야 합니다.
@@ -181,7 +180,9 @@ const { error: profileError } = await supabase
 
 ### 보호된 페이지 만들기
 
-`app/dashboard/page.tsx`:
+#### dashboard 페이지가 없어서 root page로 이동하는것으로 바꿈
+
+`app/page.tsx`:
 
 ```typescript
 import { redirect } from 'next/navigation';
@@ -214,11 +215,7 @@ import { signOut } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 
 export function LogoutButton() {
-  return (
-    <Button onClick={() => signOut()}>
-      로그아웃
-    </Button>
-  );
+  return <Button onClick={() => signOut()}>로그아웃</Button>;
 }
 ```
 

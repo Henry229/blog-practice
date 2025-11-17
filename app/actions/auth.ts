@@ -75,16 +75,14 @@ export async function signup(formData: FormData): Promise<AuthResult> {
 
   // Create profile if user was created and auto-profile is enabled
   if (authData.user && authConfig.profile.autoCreateProfile) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: authData.user.id,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        mobile: mobile || null,
-        role: authConfig.profile.defaultRole,
-      });
+    const { error: profileError } = await supabase.from('profiles').insert({
+      user_id: authData.user.id,
+      email: email,
+      first_name: firstName,
+      last_name: lastName,
+      mobile: mobile || null,
+      role: authConfig.profile.defaultRole,
+    });
 
     if (profileError) {
       console.error('Profile creation failed:', profileError);
@@ -108,7 +106,6 @@ export async function loginWithGoogle() {
       redirectTo: `${env.siteUrl}/auth/callback`,
       queryParams: {
         access_type: 'offline',
-        prompt: 'consent',
       },
     },
   });
@@ -126,7 +123,9 @@ export async function loginWithGoogle() {
 /**
  * Password reset request (send email)
  */
-export async function resetPasswordRequest(formData: FormData): Promise<AuthResult> {
+export async function resetPasswordRequest(
+  formData: FormData
+): Promise<AuthResult> {
   const email = formData.get('email') as string;
 
   if (!email) {
@@ -187,7 +186,9 @@ export async function signOut() {
  */
 export async function getUser() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 
@@ -196,7 +197,9 @@ export async function getUser() {
  */
 export async function getUserProfile() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return null;

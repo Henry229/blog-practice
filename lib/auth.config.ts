@@ -8,11 +8,11 @@ export const authConfig = {
    * URL redirects after authentication actions
    */
   redirects: {
-    afterLogin: '/dashboard',
+    afterLogin: '/',
     afterSignup: '/auth/verify-email',
     afterLogout: '/auth/login',
     afterPasswordReset: '/auth/login',
-    afterEmailVerification: '/dashboard',
+    afterEmailVerification: '/',
   },
 
   /**
@@ -20,7 +20,6 @@ export const authConfig = {
    * These will redirect to login if user is not authenticated
    */
   protectedRoutes: [
-    '/dashboard',
     '/profile',
     '/settings',
   ],
