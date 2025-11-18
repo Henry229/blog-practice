@@ -30,9 +30,9 @@ Next.js + Supabase 인증 시스템이 성공적으로 설치되었습니다! �
 ├── app/auth/verify-email/page.tsx
 └── app/auth/callback/route.ts
 
-✅ 서버 액션 및 미들웨어
+✅ 서버 액션 및 Proxy
 ├── app/actions/auth.ts             # 서버 액션
-└── middleware.ts                   # Next.js 미들웨어
+└── proxy.ts                        # Next.js 16 Proxy
 
 ✅ 데이터베이스 마이그레이션
 ├── supabase/migrations/20250111000001_create_profiles_table.sql

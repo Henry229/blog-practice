@@ -69,7 +69,7 @@ Single source of truth for:
 - OAuth providers and scopes
 - Profile defaults
 
-**Middleware (`middleware.ts`)**
+**Proxy (`proxy.ts`)**
 Handles:
 - Session refresh on every request
 - Route protection (redirects unauthenticated users)
@@ -143,7 +143,7 @@ import { createClient } from '@/lib/supabase/server';
 
 ### Adding a New Protected Route
 1. Add route to `lib/auth.config.ts` → `protectedRoutes` array
-2. Middleware automatically enforces authentication
+2. Proxy automatically enforces authentication
 
 ### Creating Server Action
 ```typescript

@@ -173,9 +173,9 @@ interface Profile {
 **목적**: Supabase Auth 기반 인증 시스템 구축 및 앱 루트 설정
 **상태**: ✅ 완료
 
-### 2.1 Middleware & RootLayout
+### 2.1 Proxy & RootLayout
 **파일**:
-- `middleware.ts` - Next.js 미들웨어 (세션 관리)
+- `proxy.ts` - Next.js 16 Proxy (세션 관리 및 라우트 보호)
 - `app/layout.tsx` - RootLayout (HTML 구조)
 - `lib/supabase/client.ts` - Supabase 클라이언트 (브라우저용)
 - `lib/supabase/server.ts` - Supabase 서버 클라이언트 (SSR용)
@@ -183,7 +183,7 @@ interface Profile {
 - `lib/auth.config.ts` - 인증 설정 (보호 라우트, 리디렉션)
 
 **포함 컴포넌트**:
-- [x] Middleware (세션 갱신 및 라우트 보호)
+- [x] Proxy (세션 갱신 및 라우트 보호)
 - [x] RootLayout (HTML 구조 및 메타데이터)
 - [x] Supabase Client Setup (클라이언트/서버 분리)
 - [x] Auth Configuration (authConfig)
@@ -196,7 +196,7 @@ interface Profile {
 
 **구현 우선순위**:
 1. Supabase 클라이언트 설정 (client.ts, server.ts)
-2. Middleware 구현 (세션 갱신)
+2. Proxy 구현 (세션 갱신 및 라우트 보호)
 3. Auth Config 설정 (보호 라우트, 리디렉션 경로)
 4. RootLayout 설정 (메타데이터, 폰트)
 5. 환경 변수 검증 (lib/env.ts)
@@ -204,12 +204,12 @@ interface Profile {
 **Supabase Auth 통합**:
 - 인증 방식: Supabase Auth (이메일/비밀번호 + OAuth)
 - 세션 관리: httpOnly 쿠키 (보안)
-- 미들웨어: 모든 요청마다 세션 갱신
-- 보호 라우트: middleware.ts에서 자동 리디렉션
+- Proxy: 모든 요청마다 세션 갱신
+- 보호 라우트: proxy.ts에서 자동 리디렉션
 
 **테스트 체크포인트**:
 - [x] Supabase 클라이언트 연결 확인
-- [x] Middleware 세션 갱신 동작
+- [x] Proxy 세션 갱신 동작
 - [x] 보호 라우트 리디렉션 확인
 - [x] 환경 변수 검증 동작
 

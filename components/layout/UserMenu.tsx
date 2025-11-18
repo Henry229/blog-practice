@@ -15,8 +15,8 @@ export function UserMenu({ user }: UserMenuProps) {
 
   if (!user) return null
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
   }
 
   const initials = getInitials(user.username)

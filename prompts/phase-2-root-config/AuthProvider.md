@@ -6,14 +6,15 @@
 **UI 참조**: N/A (전역 상태 관리)
 **상태**: - [x] 구현하지 않음 (Supabase Middleware 사용)
 
-> **⚠️ 변경사항**: 이 컴포넌트는 Supabase 기반 구현에서 **사용하지 않습니다**.
+> **⚠️ 변경사항**: 이 컴포넌트는 **실제로 구현되어 사용 중**입니다.
 >
-> **대신 사용하는 방식**:
-> - `middleware.ts` - Supabase Auth 세션 관리
+> **실제 구현 방식**:
+> - `proxy.ts` - Supabase Auth 세션 관리 및 라우트 보호
+> - `components/providers/AuthProvider.tsx` - Client-side 인증 상태 관리
 > - `lib/supabase/server.ts` - Server Component에서 사용자 정보 접근
 > - `lib/supabase/client.ts` - Client Component에서 사용자 정보 접근
 >
-> React Context 대신 **Supabase Middleware 기반 인증**을 사용합니다.
+> **Proxy + AuthProvider** 조합으로 완전한 인증 시스템을 구현합니다.
 
 ## 페이지/컴포넌트 정보
 

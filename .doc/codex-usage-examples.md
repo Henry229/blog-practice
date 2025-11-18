@@ -114,7 +114,7 @@ git add .
 # 여러 파일
 ./scripts/codex-quick-review.sh \
   app/actions/auth.ts \
-  middleware.ts \
+  proxy.ts \
   components/auth/LoginForm.tsx
 ```
 
@@ -209,7 +209,7 @@ Security audit of authentication implementation:
 
 Files:
 - app/actions/auth.ts
-- middleware.ts
+- proxy.ts
 - components/auth/*
 
 Check OWASP Top 10:

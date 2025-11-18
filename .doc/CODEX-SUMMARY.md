@@ -141,7 +141,7 @@ cat << 'EOF' | codex exec -m gpt-5 \
   --sandbox read-only
 Security audit of authentication:
 - app/actions/auth.ts
-- middleware.ts
+- proxy.ts
 - components/auth/*
 
 Check OWASP Top 10 vulnerabilities.

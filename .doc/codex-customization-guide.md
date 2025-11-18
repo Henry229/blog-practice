@@ -348,7 +348,7 @@ Security audit of authentication system:
 
 Files:
 - app/actions/auth.ts
-- middleware.ts
+- proxy.ts
 - components/auth/*
 
 Check for OWASP Top 10 vulnerabilities.

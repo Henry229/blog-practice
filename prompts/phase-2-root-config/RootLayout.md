@@ -6,14 +6,14 @@
 **UI 참조**: N/A (루트 레이아웃)
 **상태**: - [x] 완료 (Supabase 기반)
 
-> **⚠️ 변경사항**: 이 컴포넌트는 **AuthProvider 없이** 구현되었습니다.
+> **⚠️ 변경사항**: 이 컴포넌트는 **AuthProvider와 함께** 구현되었습니다.
 >
 > **실제 구현**:
 > - ✅ `app/layout.tsx` - 기본 HTML 구조, metadata, globals.css
-> - ❌ AuthProvider 래핑 - **사용하지 않음**
-> - ✅ Supabase Auth - `middleware.ts`에서 세션 관리
+> - ✅ AuthProvider 래핑 - **Client-side 인증 상태 관리**
+> - ✅ Supabase Auth - `proxy.ts`에서 세션 관리 및 라우트 보호
 >
-> **이유**: Supabase는 httpOnly 쿠키 + Middleware 방식으로 인증 상태를 관리하므로, React Context Provider가 필요하지 않습니다.
+> **이유**: Proxy(Server-side) + AuthProvider(Client-side) 조합으로 완전한 인증 시스템을 구현합니다.
 
 ## 페이지/컴포넌트 정보
 
