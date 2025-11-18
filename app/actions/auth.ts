@@ -13,7 +13,10 @@ type AuthResult = {
 /**
  * Email/Password login
  */
-export async function login(formData: FormData): Promise<AuthResult> {
+export async function login(
+  formData: FormData,
+  redirectTo?: string
+): Promise<AuthResult> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
@@ -32,13 +35,17 @@ export async function login(formData: FormData): Promise<AuthResult> {
     return { error: error.message || '로그인에 실패했습니다' };
   }
 
-  return { redirect: authConfig.redirects.afterLogin };
+  // Use provided redirect URL or fallback to default
+  return { redirect: redirectTo || authConfig.redirects.afterLogin };
 }
 
 /**
  * Email/Password signup with profile creation
  */
-export async function signup(formData: FormData): Promise<AuthResult> {
+export async function signup(
+  formData: FormData,
+  redirectTo?: string
+): Promise<AuthResult> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const firstName = formData.get('firstName') as string;
@@ -91,7 +98,8 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     }
   }
 
-  return { redirect: authConfig.redirects.afterSignup };
+  // Use provided redirect URL or fallback to default
+  return { redirect: redirectTo || authConfig.redirects.afterSignup };
 }
 
 /**

@@ -5,7 +5,7 @@ import type { Blog } from "@/types/blog"
  * Mock 블로그 데이터
  * 실제 사용 시 Supabase 데이터베이스로 교체 예정
  */
-let mockBlogs: Blog[] = [
+const mockBlogs: Blog[] = [
   {
     id: "1",
     title: "Designing for Simplicity",

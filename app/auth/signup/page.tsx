@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
@@ -5,7 +6,9 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md space-y-4">
-        <SignupForm />
+        <Suspense fallback={<div>로딩 중...</div>}>
+          <SignupForm />
+        </Suspense>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -16,7 +19,9 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <GoogleLoginButton />
+        <Suspense fallback={<div>로딩 중...</div>}>
+          <GoogleLoginButton />
+        </Suspense>
       </div>
     </div>
   );

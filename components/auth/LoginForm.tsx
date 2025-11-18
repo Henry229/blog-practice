@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,14 +19,31 @@ import { Loader2 } from 'lucide-react';
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Get redirect URL from query params
+  const redirectTo = searchParams.get('redirect') || undefined;
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'auth_callback_error') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError('인증에 실패했습니다. 다시 시도해주세요.');
+      // URL에서 에러 파라미터 제거
+      const url = new URL(window.location.href);
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError('');
 
-    const result = await login(formData);
+    // Pass redirect URL to login action
+    const result = await login(formData, redirectTo);
 
     if (result.error) {
       setError(result.error);

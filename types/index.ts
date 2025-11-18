@@ -9,6 +9,7 @@ export type { AuthContextType, AuthState } from "./auth"
 /**
  * API 응답 공통 타입
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ApiResponse<T = any> {
   success: boolean
   data?: T
