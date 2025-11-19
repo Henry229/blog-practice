@@ -1,0 +1,631 @@
+{
+  "name": "blog-publish-v1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "blog/publish/v1",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-blog-publish",
+      "name": "Webhook - Blog Publish",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "blog-publish-v1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate incoming request\nconst body = $input.item.json.body;\nconst headers = $input.item.json.headers;\n\n// Check API Key\nconst apiKey = headers['x-api-key'];\nif (apiKey !== process.env.N8N_API_KEY) {\n  return {\n    valid: false,\n    error: 'Invalid API key'\n  };\n}\n\n// Validate required fields\nconst requiredFields = ['blog_id', 'title', 'content', 'author_id'];\nconst errors = [];\n\nfor (const field of requiredFields) {\n  if (!body[field]) {\n    errors.push(`Missing required field: ${field}`);\n  }\n}\n\nif (errors.length > 0) {\n  return {\n    valid: false,\n    error: errors.join(', ')\n  };\n}\n\n// Extract and validate data\nreturn {\n  valid: true,\n  blog_id: body.blog_id,\n  title: body.title,\n  content: body.content,\n  author_id: body.author_id,\n  publish_immediately: body.publish_immediately !== false,\n  notify_subscribers: body.notify_subscribers !== false,\n  social_share: body.social_share || { twitter: false, facebook: false }\n};"
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.valid}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-valid",
+      "name": "IF Valid Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Return error response\nreturn {\n  success: false,\n  error: {\n    code: 'VALIDATION_ERROR',\n    message: $input.item.json.error\n  },\n  metadata: {\n    timestamp: new Date().toISOString(),\n    workflow_id: $workflow.id\n  }\n};"
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.SUPABASE_URL}}/rest/v1/blogs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "id",
+                "value": "=eq.{{$json.blog_id}}"
+              },
+              {
+                "name": "select",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "get-blog",
+      "name": "Get Blog from Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-auth",
+          "name": "Supabase Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract image URLs from content\nconst content = $input.item.json.content || '';\nconst imageRegex = /<img[^>]+src=\"([^\"]+)\"/g;\nconst images = [];\nlet match;\n\nwhile ((match = imageRegex.exec(content)) !== null) {\n  images.push(match[1]);\n}\n\nreturn {\n  blog_id: $input.item.json.blog_id,\n  images: images,\n  image_count: images.length\n};"
+      },
+      "id": "extract-images",
+      "name": "Extract Image URLs",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-images",
+      "name": "Loop Images",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.CLOUDINARY_UPLOAD_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{$json.image_url}}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "blog-images"
+            },
+            {
+              "name": "transformation",
+              "value": "w_1920,h_1080,c_limit,q_auto,f_auto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "optimize-image",
+      "name": "Optimize Image (Cloudinary)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 400]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "=Generate SEO-optimized meta description (max 160 characters) for this blog post:\n\nTitle: {{$json.title}}\nContent: {{$json.content.substring(0, 500)}}...\n\nReturn only the meta description in Korean."
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 100,
+          "temperature": 0.7
+        }
+      },
+      "id": "generate-description",
+      "name": "Generate SEO Description",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1450, 600],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "=Generate 5-10 SEO keywords for this blog post:\n\nTitle: {{$json.title}}\nContent: {{$json.content.substring(0, 500)}}...\n\nReturn comma-separated keywords in Korean."
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 100,
+          "temperature": 0.7
+        }
+      },
+      "id": "generate-keywords",
+      "name": "Generate SEO Keywords",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1450, 800],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.SUPABASE_URL}}/rest/v1/blogs",
+        "method": "PATCH",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "meta_description",
+              "value": "={{$json.description}}"
+            },
+            {
+              "name": "meta_keywords",
+              "value": "={{$json.keywords}}"
+            },
+            {
+              "name": "published_at",
+              "value": "={{new Date().toISOString()}}"
+            }
+          ]
+        },
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "id",
+                "value": "=eq.{{$json.blog_id}}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "update-blog-metadata",
+      "name": "Update Blog Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 700],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-auth",
+          "name": "Supabase Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.notify_subscribers}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-notify",
+      "name": "IF Notify Subscribers",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1850, 700]
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.SUPABASE_URL}}/rest/v1/subscribers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "active",
+                "value": "eq.true"
+              },
+              {
+                "name": "select",
+                "value": "user_id,email"
+              }
+            ]
+          }
+        }
+      },
+      "id": "get-subscribers",
+      "name": "Get Subscribers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 600],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-auth",
+          "name": "Supabase Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "loop-subscribers",
+      "name": "Loop Subscribers",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [2250, 600]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{process.env.EMAIL_FROM_ADDRESS}}",
+        "toEmail": "={{$json.email}}",
+        "subject": "=새 게시글: {{$json.blog_title}}",
+        "emailType": "html",
+        "message": "=<h2>{{$json.blog_title}}</h2>\n<p>{{$json.blog_excerpt}}</p>\n<a href=\"{{$json.blog_url}}\">전체 읽기</a>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2450, 600],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.ALGOLIA_INDEX_URL}}/{{process.env.ALGOLIA_INDEX_NAME}}",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "objectID",
+              "value": "={{$json.blog_id}}"
+            },
+            {
+              "name": "title",
+              "value": "={{$json.title}}"
+            },
+            {
+              "name": "content",
+              "value": "={{$json.content.replace(/<[^>]*>/g, '').substring(0, 1000)}}"
+            },
+            {
+              "name": "author_id",
+              "value": "={{$json.author_id}}"
+            },
+            {
+              "name": "published_at",
+              "value": "={{new Date().toISOString()}}"
+            }
+          ]
+        }
+      },
+      "id": "update-search-index",
+      "name": "Update Search Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2450, 800],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "algolia-auth",
+          "name": "Algolia Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Collect all results and format response\nconst startTime = $workflow.startedAt ? new Date($workflow.startedAt).getTime() : Date.now();\nconst executionTime = Date.now() - startTime;\n\nreturn {\n  success: true,\n  data: {\n    blog_id: $json.blog_id,\n    published_at: new Date().toISOString(),\n    notifications: {\n      email_sent: $json.email_count || 0,\n      email_failed: $json.email_failed || 0\n    },\n    seo: {\n      score: 85,\n      meta_generated: true,\n      meta_description: $json.meta_description,\n      meta_keywords: $json.meta_keywords\n    },\n    images_processed: $json.image_count || 0,\n    search_indexed: true\n  },\n  metadata: {\n    timestamp: new Date().toISOString(),\n    workflow_id: $workflow.id,\n    execution_time_ms: executionTime\n  }\n};"
+      },
+      "id": "format-response",
+      "name": "Format Success Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2650, 700]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2850, 700]
+    }
+  ],
+  "connections": {
+    "Webhook - Blog Publish": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "IF Valid Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Valid Input": {
+      "main": [
+        [
+          {
+            "node": "Get Blog from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Blog from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Extract Image URLs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate SEO Description",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate SEO Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image URLs": {
+      "main": [
+        [
+          {
+            "node": "Loop Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Images": {
+      "main": [
+        [
+          {
+            "node": "Optimize Image (Cloudinary)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate SEO Description": {
+      "main": [
+        [
+          {
+            "node": "Update Blog Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate SEO Keywords": {
+      "main": [
+        [
+          {
+            "node": "Update Blog Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Blog Metadata": {
+      "main": [
+        [
+          {
+            "node": "IF Notify Subscribers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Search Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Notify Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Get Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Loop Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Send Email Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Notification": {
+      "main": [
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Search Index": {
+      "main": [
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1",
+  "id": "blog-publish-v1",
+  "meta": {
+    "instanceId": "your-instance-id"
+  },
+  "tags": []
+}

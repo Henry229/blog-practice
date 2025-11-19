@@ -4,7 +4,6 @@ import { BlogPost } from "@/components/blog/BlogPost"
 import { CommentList } from "@/components/blog/CommentList"
 import { CommentForm } from "@/components/blog/CommentForm"
 import { Separator } from "@/components/ui/separator"
-import { getMockBlogById } from "@/lib/data/mockBlogs"
 import { getMockComments } from "@/lib/data/mockComments"
 import { createClient } from "@/lib/supabase/server"
 
@@ -17,25 +16,55 @@ interface PostDetailPageProps {
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { id } = await params
 
-  // Get blog data
-  const blog = getMockBlogById(id)
+  // Get Supabase client
+  const supabase = await createClient()
+
+  // Get blog data from Supabase with author profile
+  const { data: blogData, error } = await supabase
+    .from("blogs")
+    .select(`
+      *,
+      profiles!author_id (
+        first_name,
+        last_name,
+        email
+      )
+    `)
+    .eq("id", id)
+    .single()
 
   // If blog not found, show 404
-  if (!blog) {
+  if (error || !blogData) {
     notFound()
+  }
+
+  // Transform Supabase data to match Blog type
+  const profile = blogData.profiles as { first_name?: string; last_name?: string; email?: string } | null
+  const authorName = profile
+    ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email || 'Unknown'
+    : 'Unknown'
+
+  const blog = {
+    id: blogData.id,
+    title: blogData.title,
+    content: blogData.content,
+    authorId: blogData.author_id,
+    authorName,
+    authorAvatar: undefined,
+    createdAt: blogData.created_at,
+    updatedAt: blogData.updated_at,
   }
 
   // Get comments for this blog
   const comments = getMockComments(id)
 
   // Get current user from auth
-  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const isLoggedIn = !!user
   const currentUserId = user?.id
   const currentUserName = user?.email || user?.user_metadata?.name || "Anonymous"
-  const isAuthor = user?.id === blog.authorId
+  const isAuthor = user?.id === blogData.author_id
 
   return (
     <PageContainer className="py-8">

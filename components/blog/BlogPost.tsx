@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ArrowLeft, Edit, Trash2 } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Loader2 } from "lucide-react"
+import { deleteBlog } from "@/app/actions/blog"
 import type { Blog } from "@/types/blog"
 
 interface BlogPostProps {
@@ -14,6 +16,7 @@ interface BlogPostProps {
 
 export function BlogPost({ blog, isAuthor = false }: BlogPostProps) {
   const router = useRouter()
+  const [deleting, setDeleting] = useState(false)
 
   // Format date
   const formattedDate = new Date(blog.createdAt).toLocaleDateString("en-US", {
@@ -35,9 +38,22 @@ export function BlogPost({ blog, isAuthor = false }: BlogPostProps) {
       return
     }
 
-    // TODO: Implement delete logic (Server Action)
-    // For now, just redirect to home
-    router.push("/")
+    setDeleting(true)
+
+    try {
+      const result = await deleteBlog(blog.id)
+
+      if (result.error) {
+        alert(result.error)
+        setDeleting(false)
+      } else {
+        // Success: redirect to home
+        router.push("/")
+      }
+    } catch {
+      alert("An unexpected error occurred")
+      setDeleting(false)
+    }
   }
 
   return (
@@ -58,7 +74,7 @@ export function BlogPost({ blog, isAuthor = false }: BlogPostProps) {
         {/* Edit/Delete Buttons (Author only) */}
         {isAuthor && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild disabled={deleting}>
               <Link href={`/blog/${blog.id}/edit`}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -68,10 +84,20 @@ export function BlogPost({ blog, isAuthor = false }: BlogPostProps) {
               variant="outline"
               size="sm"
               onClick={handleDelete}
+              disabled={deleting}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
             </Button>
           </div>
         )}

@@ -46,4 +46,16 @@ export const env = {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL!,
+
+  // n8n Backend (optional - will warn if missing)
+  n8nBackendUrl: process.env.N8N_BACKEND_URL || '',
+  n8nApiKey: process.env.N8N_API_KEY || '',
 } as const;
+
+// Validate n8n configuration
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+  if (!env.n8nBackendUrl || !env.n8nApiKey) {
+    console.warn('⚠️  n8n backend configuration is missing. Some features may not work.');
+    console.warn('   Add N8N_BACKEND_URL and N8N_API_KEY to .env.local');
+  }
+}
